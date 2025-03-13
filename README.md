@@ -2,7 +2,9 @@
 
 A simulation of an autonomous robot that can sort objects on a grid based on natural language commands. The robot uses a zero-shot classification model to interpret commands and can sort objects based on their shape or color.
 
-![Robot Sorting Simulation](robot_demo.png)
+
+https://github.com/user-attachments/assets/4170b81b-5fb1-4df2-9a26-dae74459b497
+
 
 ## Features
 

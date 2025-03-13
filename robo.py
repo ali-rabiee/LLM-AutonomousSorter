@@ -18,7 +18,7 @@ classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnl
 
 
 SHAPES = ['circle', 'triangle', 'square']
-COLORS = ['red', 'green', 'yellow']
+COLORS = ['red', 'green', 'blue']
 
 
 try:
@@ -116,27 +116,70 @@ def generate_random_objects(num_objects, grid_size, sorting_areas):
     objects = []
     positions = set()
     
-
+    # Define positions to avoid (robot's initial position and sorting areas)
     forbidden_positions = {(0, 0)}  
     for area in sorting_areas:
         for x in range(area.position[0], area.position[0] + area.size[0]):
             for y in range(area.position[1], area.position[1] + area.size[1]):
                 forbidden_positions.add((x, y))
     
-
+    # Create a list of all possible shape-color combinations
+    all_combinations = [(shape, color) for shape in SHAPES for color in COLORS]
+    
+    # Ensure at least one of each color and one of each shape
+    required_combinations = []
+    colors_used = set()
+    shapes_used = set()
+    
+    # First, ensure we have at least one of each shape
     for shape in SHAPES:
-        for color in COLORS:
-          
-            count = 0
-            while count < 1:  
-                x = random.randint(0, grid_size[0] - 1)
-                y = random.randint(0, grid_size[1] - 1)
-                
-      
-                if (x, y) not in positions and (x, y) not in forbidden_positions:
-                    positions.add((x, y))
-                    objects.append(GridObject(shape, color, (x, y)))
-                    count += 1
+        if shape not in shapes_used:
+            # Pick a random color for this shape that hasn't been used if possible
+            available_colors = [c for c in COLORS if c not in colors_used] or COLORS
+            selected_color = random.choice(available_colors)
+            required_combinations.append((shape, selected_color))
+            shapes_used.add(shape)
+            colors_used.add(selected_color)
+    
+    # Then, ensure we have at least one of each color
+    for color in COLORS:
+        if color not in colors_used:
+            # Pick a random shape for this color that creates a unique combination
+            available_shapes = [s for s in SHAPES 
+                               if (s, color) not in required_combinations]
+            if available_shapes:
+                selected_shape = random.choice(available_shapes)
+                required_combinations.append((selected_shape, color))
+                shapes_used.add(selected_shape)
+                colors_used.add(color)
+    
+    # Calculate how many additional random combinations we need
+    remaining_slots = max(0, num_objects - len(required_combinations))
+    
+    # Get remaining combinations that aren't already required
+    remaining_combinations = [(s, c) for s, c in all_combinations 
+                             if (s, c) not in required_combinations]
+    
+    # Select random additional combinations if needed
+    selected_combinations = required_combinations.copy()
+    if remaining_slots > 0 and remaining_combinations:
+        additional_combinations = random.sample(
+            remaining_combinations, 
+            min(remaining_slots, len(remaining_combinations))
+        )
+        selected_combinations.extend(additional_combinations)
+    
+    # Create objects for each selected combination
+    for shape, color in selected_combinations:
+        # Try to find a valid position
+        for _ in range(100):  # Limit attempts to prevent infinite loop
+            x = random.randint(0, grid_size[0] - 1)
+            y = random.randint(0, grid_size[1] - 1)
+            
+            if (x, y) not in positions and (x, y) not in forbidden_positions:
+                positions.add((x, y))
+                objects.append(GridObject(shape, color, (x, y)))
+                break
     
     return objects
 
@@ -663,7 +706,7 @@ def main():
     dummy_sorting_areas = create_sorting_areas(grid_size, "SORT_BY_COLOR")
     
 
-    grid_objects = generate_random_objects(9, grid_size, dummy_sorting_areas) 
+    grid_objects = generate_random_objects(4, grid_size, dummy_sorting_areas) 
    
     fig = plt.figure(figsize=(10, 10))  
     ax = fig.add_subplot(111)

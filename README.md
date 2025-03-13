@@ -32,7 +32,7 @@ To run this project, you'll need:
 
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/LLM-AutonomousSorter.git
+   git clone https://github.com/ali-rabiee/LLM-AutonomousSorter.git
    cd LLM-AutonomousSorter
    ```
 
